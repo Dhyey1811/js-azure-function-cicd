@@ -1,0 +1,42 @@
+trigger:
+- main
+
+stages:
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: BuildJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+    - script: npm install
+      displayName: 'Install npm packages'
+
+- stage: Test
+  displayName: 'Test Stage'
+  dependsOn: Build
+  jobs:
+  - job: TestJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: npm test
+      displayName: 'Run Tests'
+
+- stage: Deploy
+  displayName: 'Deploy Stage'
+  dependsOn: Test
+  jobs:
+  - job: DeployJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureFunctionApp@1
+      inputs:
+        azureSubscription: 'azure-dhyey-conn'  # Replace with your Azure service connection name
+        appType: functionApp
+        appName: 'js-func-dhyey'               # Replace with your Azure Function App name
+        package: '.'
